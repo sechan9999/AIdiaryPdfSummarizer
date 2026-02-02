@@ -6,7 +6,7 @@
 const CONFIG = {
     API_BASE_URL: 'https://openrouter.ai/api/v1',
     // 무료이면서 성능이 좋은 DeepSeek 모델 사용 (V3/R1 계열)
-    MODEL: 'meta-llama/llama-3.3-70b-instruct:free',
+    MODEL: 'meta-llama/llama-3.1-8b-instruct:free',
     APP_NAME: 'AI Empathy Diary',
     SITE_URL: window.location.href
 };
