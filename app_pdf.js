@@ -7,7 +7,7 @@
 const CONFIG = {
     API_BASE_URL: 'https://openrouter.ai/api/v1',
     // 교체: DeepSeek 무료 버전 불안정 -> 구글 Gemini 2.0 Flash Thinking (무료, 고성능)
-    MODEL: 'google/gemini-2.0-flash-exp:free',
+    MODEL: 'google/gemini-2.0-pro-exp-02-05:free',
     FALLBACK_MODEL: 'google/gemini-2.0-pro-exp-02-05:free', // 예비용 무료 모델 (Pro Experimental)
     MAX_CHARS: 25000, // Gemini Context 윈도우 고려하여 조정
 };
