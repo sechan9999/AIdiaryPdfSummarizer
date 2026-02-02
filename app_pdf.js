@@ -7,7 +7,7 @@
 const CONFIG = {
     API_BASE_URL: 'https://openrouter.ai/api/v1',
     // 교체: DeepSeek 무료 버전 불안정 -> 구글 Gemini 2.0 Flash Thinking (무료, 고성능)
-    MODEL: 'google/gemini-2.0-flash-thinking-exp:free',
+    MODEL: 'google/gemini-2.0-flash-exp:free',
     FALLBACK_MODEL: 'meta-llama/llama-3.3-70b-instruct:free', // 예비용 무료 모델
     MAX_CHARS: 30000, // Gemini는 컨텍스트가 길어서 더 많이 허용 가능
 };
@@ -90,7 +90,7 @@ async function summarizeText(text) {
 \`키워드1\`, \`키워드2\`, \`키워드3\`
 
 ---
-*DeepSeek AI가 분석함*
+*AI Smart Summary*
 `;
 
     async function callApi(model, messages) {
