@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 공감 다이어리 🌱</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div class="app-container">
+        <header>
+            <h1>AI 공감 다이어리 🌱</h1>
+            <p class="subtitle">당신의 하루를 들려주세요. 따뜻한 위로를 전해드릴게요.</p>
+        </header>
+
+        <!-- API Key Status Bar -->
+        <div class="api-bar">
+            <div class="api-status">
+                <div class="status-dot" id="statusDot"></div>
+                <span id="statusText">API 키 확인 필요</span>
+            </div>
+            <button class="btn-small" onclick="openKeyModal()">설정</button>
+        </div>
+
+        <!-- Write Diary Section -->
+        <div class="write-section">
+            <textarea id="diaryInput" placeholder="오늘 어떤 일이 있으셨나요? 짧게라도 좋으니 마음 속 이야기를 적어보세요..."></textarea>
+            <button class="btn-primary" id="submitBtn" onclick="handleDiarySubmit()">
+                <span class="btn-text">공감 받기 ✨</span>
+                <span class="spinner" style="display: none;"></span>
+            </button>
+        </div>
+
+        <!-- Diary List -->
+        <div id="diaryList" class="diary-list">
+            <!-- Diaries will be inserted here -->
+            <div class="empty-state">아직 작성된 일기가 없어요.<br>첫 번째 이야기를 들려주실래요? 📝</div>
+        </div>
+    </div>
+
+    <!-- API Key Modal -->
+    <div id="keyModal" class="modal">
+        <div class="modal-content">
+            <h2>🔑 API 키 설정</h2>
+            <p style="font-size: 0.9rem; color: #666; margin-bottom: 10px;">
+                OpenRouter API 키를 입력해주세요.<br>
+                키는 브라우저에 안전하게 저장됩니다.
+            </p>
+            <input type="password" id="apiKeyInput" class="input-field" placeholder="sk-or-v1-...">
+            <button class="btn-primary" onclick="saveKeyFromModal()">저장하기</button>
+            <button class="btn-small" onclick="closeKeyModal()"
+                style="margin-top: 10px; width: 100%; border: none;">닫기</button>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="app.js"></script>
+    <script>
+        // UI Interaction Logic
+        const diaryInput = document.getElementById('diaryInput');
+        const submitBtn = document.getElementById('submitBtn');
+        const btnText = submitBtn.querySelector('.btn-text');
+        const spinner = submitBtn.querySelector('.spinner');
+        const diaryList = document.getElementById('diaryList');
+        const statusDot = document.getElementById('statusDot');
+        const statusText = document.getElementById('statusText');
+        const keyModal = document.getElementById('keyModal');
+
+        // Initialization
+        window.addEventListener('DOMContentLoaded', () => {
+            updateApiStatus();
+            renderDiaries();
+        });
+
+        // API Status Update
+        function updateApiStatus() {
+            const hasKey = !!localStorage.getItem('openrouter_api_key');
+            if (hasKey) {
+                statusDot.classList.add('active');
+                statusText.textContent = "AI 연결 준비 완료";
+                state.apiKey = localStorage.getItem('openrouter_api_key');
+            } else {
+                statusDot.classList.remove('active');
+                statusText.textContent = "API 키 설정 필요";
+            }
+        }
+
+        // Modal Functions
+        function openKeyModal() {
+            keyModal.style.display = 'flex';
+            document.getElementById('apiKeyInput').value = localStorage.getItem('openrouter_api_key') || '';
+        }
+
+        function closeKeyModal() {
+            keyModal.style.display = 'none';
+        }
+
+        function saveKeyFromModal() {
+            const key = document.getElementById('apiKeyInput').value.trim();
+            if (!key) {
+                alert('API 키를 입력해주세요!');
+                return;
+            }
+            saveApiKey(key);
+            closeKeyModal();
+            updateApiStatus();
+            alert('키가 저장되었습니다! 🔐');
+        }
+
+        // Submit Logic
+        async function handleDiarySubmit() {
+            const text = diaryInput.value.trim();
+            if (!text) {
+                alert('일기 내용을 입력해주세요.');
+                diaryInput.focus();
+                return;
+            }
+
+            if (!state.apiKey) {
+                openKeyModal();
+                return;
+            }
+
+            // UI Loading State
+            setLoading(true);
+
+            try {
+                // 1. Call AI
+                const aiResult = await analyzeDiaryWithAI(text);
+
+                // 2. Save Data
+                const diaryData = {
+                    content: text,
+                    ...aiResult
+                };
+                saveDiary(diaryData);
+
+                // 3. Update UI
+                diaryInput.value = '';
+                renderDiaries();
+
+            } catch (error) {
+                alert(`오류가 발생했습니다 😢\n${error.message}`);
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        function setLoading(isLoading) {
+            submitBtn.disabled = isLoading;
+            if (isLoading) {
+                btnText.textContent = '마음을 읽는 중...';
+                spinner.style.display = 'inline-block';
+            } else {
+                btnText.textContent = '공감 받기 ✨';
+                spinner.style.display = 'none';
+            }
+        }
+
+        // Render Logic
+        function renderDiaries() {
+            const diaries = getDiaries();
+
+            if (diaries.length === 0) {
+                diaryList.innerHTML = '<div class="empty-state">아직 작성된 일기가 없어요.<br>첫 번째 이야기를 들려주실래요? 📝</div>';
+                return;
+            }
+
+            diaryList.innerHTML = diaries.map(diary => `
+                <div class="diary-card" style="border-left-color: ${diary.color || '#ddd'}">
+                    <div class="diary-header">
+                        <span>${diary.date} ${new Date(diary.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                        <div style="display: flex; gap: 10px; align-items: center;">
+                            <span class="emotion-tag" style="background-color: ${diary.color || '#999'}">${diary.emotion}</span>
+                            <button class="delete-btn" onclick="removeDiary(${diary.id})">&times;</button>
+                        </div>
+                    </div>
+                    <div class="diary-content">${escapeHtml(diary.content)}</div>
+                    <div class="ai-response">
+                        <h4>🤖 AI 심리 상담가의 답장</h4>
+                        <p class="empathy-text">"${escapeHtml(diary.empathy_message)}"</p>
+                        <div class="advice-text">💡 ${escapeHtml(diary.advice)}</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function removeDiary(id) {
+            if (confirm('이 일기를 정말 삭제하시겠어요?')) {
+                deleteDiary(id);
+                renderDiaries();
+            }
+        }
+
+        // Security Utility (Prevention of XSS)
+        function escapeHtml(text) {
+            if (!text) return '';
+            return text
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+    </script>
+</body>
+
+</html>

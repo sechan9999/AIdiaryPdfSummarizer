@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI PDF Summarizer 📑</title>
+    <link rel="stylesheet" href="style_pdf.css">
+
+    <!-- Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.2/marked.min.js"></script>
+</head>
+
+<body>
+    <header class="header">
+        <div class="brand">
+            <span>📑</span> AI PDF 요약기
+        </div>
+        <div class="api-status-badge" onclick="openKeyModal()" id="apiStatus">
+            🔒 API 키 설정 필요
+        </div>
+    </header>
+
+    <div class="main-container">
+        <!-- 1. Upload Area -->
+        <section class="upload-section">
+            <div class="upload-zone" id="dropZone">
+                <div class="upload-icon">📄</div>
+                <h3>PDF 파일을 여기에 놓으세요</h3>
+                <p style="color: #64748B; margin-top: 8px;">또는 클릭하여 파일 선택</p>
+                <button class="upload-btn">파일 선택하기</button>
+                <input type="file" id="fileInput" accept=".pdf" hidden>
+            </div>
+        </section>
+
+        <!-- 2. Result Area -->
+        <section class="result-section">
+            <div class="result-header">
+                <h3 style="font-size: 1rem; color: #334155;">분석 결과</h3>
+                <button class="upload-btn" onclick="copyToClipboard()"
+                    style="padding: 6px 12px; font-size: 0.9rem; background: #64748B;">
+                    📋 복사
+                </button>
+            </div>
+
+            <div class="result-content" id="resultContent">
+                <div style="text-align: center; color: #94A3B8; margin-top: 100px;">
+                    왼쪽 패널에서 PDF 파일을 업로드하면<br>
+                    AI가 핵심 내용을 요약해드립니다. 🧠
+                </div>
+            </div>
+
+            <!-- Loading Overlay -->
+            <div class="loading-overlay" id="loadingOverlay" style="display: none;">
+                <span class="loader"></span>
+                <p id="statusMessage">문서를 분석하고 있습니다...</p>
+            </div>
+        </section>
+    </div>
+
+    <!-- API Key Modal -->
+    <div class="modal-backdrop" id="keyModal" style="display: none;">
+        <div class="modal-box">
+            <h3 style="margin-bottom: 8px;">🔑 API 키 설정</h3>
+            <p style="font-size: 0.9rem; color: #64748B;">
+                DeepSeek 모델 사용을 위해 OpenRouter API 키가 필요합니다.
+                <a href="https://openrouter.ai/keys" target="_blank" style="color: var(--primary);">키 발급받기</a>
+            </p>
+            <input type="password" id="apiKeyInput" class="input-full" placeholder="sk-or-v1-...">
+            <div style="display: flex; gap: 8px; justify-content: flex-end;">
+                <button onclick="closeKeyModal()"
+                    style="padding: 8px 16px; border: 1px solid #E2E8F0; background: white; border-radius: 6px; cursor: pointer;">취소</button>
+                <button onclick="saveKeyFromModal()"
+                    style="padding: 8px 16px; border: none; background: var(--primary); color: white; border-radius: 6px; cursor: pointer;">저장</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="app_pdf.js"></script>
+    <script>
+        // UI & Event Logic (Frontend Dev & QA)
+
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const resultContent = document.getElementById('resultContent');
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        const apiStatus = document.getElementById('apiStatus');
+        const keyModal = document.getElementById('keyModal');
+
+        // Init
+        document.addEventListener('DOMContentLoaded', () => {
+            updateApiStatusUI();
+
+            // Drag & Drop
+            dropZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                dropZone.classList.add('dragover');
+            });
+            dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+            dropZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dropZone.classList.remove('dragover');
+                const files = e.dataTransfer.files;
+                if (files.length > 0) handleFileUpload(files[0]);
+            });
+
+            // Click Upload
+            dropZone.addEventListener('click', () => fileInput.click());
+            fileInput.addEventListener('change', (e) => {
+                if (e.target.files.length > 0) handleFileUpload(e.target.files[0]);
+            });
+        });
+
+        // UI Helpers
+        function setLoading(isLoading) {
+            loadingOverlay.style.display = isLoading ? 'flex' : 'none';
+        }
+
+        function showResultSection(show) {
+            // Mobile responsive logic could go here
+        }
+
+        function renderResult(markdown) {
+            resultContent.innerHTML = marked.parse(markdown);
+        }
+
+        function updateApiStatusUI() {
+            const hasKey = !!localStorage.getItem('openrouter_api_key');
+            if (hasKey) {
+                apiStatus.classList.add('active');
+                apiStatus.textContent = '⚡ AI Ready';
+            } else {
+                apiStatus.classList.remove('active');
+                apiStatus.textContent = '🔒 API 키 설정 필요';
+            }
+        }
+
+        async function copyToClipboard() {
+            const text = resultContent.innerText;
+            if (!text || text.includes('왼쪽 패널에서')) return;
+            try {
+                await navigator.clipboard.writeText(text);
+                alert('요약 내용이 복사되었습니다!');
+            } catch (err) {
+                alert('복사에 실패했습니다.');
+            }
+        }
+
+        // Modal
+        function openKeyModal() {
+            keyModal.style.display = 'flex';
+            document.getElementById('apiKeyInput').value = localStorage.getItem('openrouter_api_key') || '';
+        }
+        function closeKeyModal() { keyModal.style.display = 'none'; }
+        function saveKeyFromModal() {
+            const key = document.getElementById('apiKeyInput').value.trim();
+            if (key) {
+                saveApiKey(key);
+                closeKeyModal();
+                alert('API 키가 저장되었습니다.');
+            }
+        }
+    </script>
+</body>
+
+</html>
