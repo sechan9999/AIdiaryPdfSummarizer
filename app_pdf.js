@@ -5,11 +5,11 @@
 
 // ==================== Configuration ====================
 const CONFIG = {
-    API_BASE_URL: 'https://openrouter.ai/api/v1',
-    // 교체: DeepSeek 무료 버전 불안정 -> 구글 Gemini 2.0 Flash Thinking (무료, 고성능)
-    MODEL: 'google/gemma-3-12b-it:free',
-    FALLBACK_MODEL: 'google/gemma-3-4b-it:free', // 예비용 무료 모델 (Gemma 3 4B)
-    MAX_CHARS: 25000, // Gemini Context 윈도우 고려하여 조정
+    // Upstage 공식 API (Solar)
+    API_BASE_URL: 'https://api.upstage.ai/v1/solar',
+    MODEL: 'solar-pro',
+    FALLBACK_MODEL: 'solar-mini', // 예비용 모델
+    MAX_CHARS: 25000,
 };
 
 // PDF.js Worker 설정 (CDN)

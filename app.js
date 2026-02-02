@@ -4,9 +4,9 @@
  */
 
 const CONFIG = {
-    API_BASE_URL: 'https://openrouter.ai/api/v1',
-    // 무료이면서 성능이 좋은 DeepSeek 모델 사용 (V3/R1 계열)
-    MODEL: 'google/gemma-3-12b-it:free',
+    // Upstage 공식 API 사용 (OpenRouter보다 안정적)
+    API_BASE_URL: 'https://api.upstage.ai/v1/solar',
+    MODEL: 'solar-pro',
     APP_NAME: 'AI Empathy Diary',
     SITE_URL: window.location.href
 };
